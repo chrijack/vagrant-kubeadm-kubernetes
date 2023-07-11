@@ -12,7 +12,7 @@ NUM_WORKER_NODES = settings["nodes"]["workers"]["count"]
 Vagrant.configure("2") do |config|
   config.vm.provision "shell", env: { "IP_NW" => IP_NW, "IP_START" => IP_START, "NUM_WORKER_NODES" => NUM_WORKER_NODES }, inline: <<-SHELL
       apt-get update -y
-      echo "$IP_NW$((IP_START)) master-node" >> /etc/hosts
+      echo "$IP_NW$((IP_START)) control-plane" >> /etc/hosts
       for i in `seq 1 ${NUM_WORKER_NODES}`; do
         echo "$IP_NW$((IP_START+i)) worker-node0${i}" >> /etc/hosts
       done
@@ -27,21 +27,21 @@ Vagrant.configure("2") do |config|
   config.vm.box_check_update = true
   
 
-  config.vm.define "master" do |master|
-    master.vm.hostname = "master-node"
-    master.vm.network "private_network", ip: settings["network"]["control_ip"]
+  config.vm.define "control-plane" do |control|
+    control.vm.hostname = "master-node"
+    control.vm.network "private_network", ip: settings["network"]["control_ip"]
     if settings["shared_folders"]
       settings["shared_folders"].each do |shared_folder|
-        master.vm.synced_folder shared_folder["host_path"], shared_folder["vm_path"]
+        control.vm.synced_folder shared_folder["host_path"], shared_folder["vm_path"]
       end
     end
-    master.vm.provider "vmware_fusion" do |vb|
+   control.vm.provider "vmware_fusion" do |vb|
         vb.cpus = settings["nodes"]["control"]["cpu"]
         vb.memory = settings["nodes"]["control"]["memory"]
         vb.gui = true
         vb.ssh_info_public = true
     end
-    master.vm.provision "shell",
+    control.vm.provision "shell",
       env: {
         "DNS_SERVERS" => settings["network"]["dns_servers"].join(" "),
         "ENVIRONMENT" => settings["environment"],
@@ -49,14 +49,14 @@ Vagrant.configure("2") do |config|
         "OS" => settings["software"]["os"]
       },
       path: "scripts/common.sh"
-    master.vm.provision "shell",
+    control.vm.provision "shell",
       env: {
         "CALICO_VERSION" => settings["software"]["calico"],
         "CONTROL_IP" => settings["network"]["control_ip"],
         "POD_CIDR" => settings["network"]["pod_cidr"],
         "SERVICE_CIDR" => settings["network"]["service_cidr"]
       },
-      path: "scripts/master.sh"
+      path: "scripts/control-plane.sh"
   end
 
   (1..NUM_WORKER_NODES).each do |i|
