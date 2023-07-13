@@ -4,6 +4,8 @@
 
 set -euxo pipefail
 
+
+
 # Variable Declaration
 
 # DNS Setting

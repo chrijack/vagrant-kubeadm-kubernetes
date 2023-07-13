@@ -40,6 +40,20 @@ curl https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/m
 
 kubectl apply -f calico.yaml
 
+# Install helm (required for cilium)
+#wget https://get.helm.sh/helm-v3.12.1-linux-amd64.tar.gz
+#tar xvf helm-*-linux-amd64.tar.gz
+#sudo mv linux-amd64/helm /usr/local/bin
+
+#kubectl label node $NODENAME node-access=ssh
+#kubectl create namespace cilium
+
+# Install Cilium 
+#helm repo add cilium https://helm.cilium.io/
+#helm install cilium cilium/cilium --version 1.13.4 \
+#  --namespace cilium 
+
+
 sudo -i -u vagrant bash << EOF
 whoami
 mkdir -p /home/vagrant/.kube

@@ -9,9 +9,15 @@ IP_NW = IP_SECTIONS.captures[0]
 IP_START = Integer(IP_SECTIONS.captures[1])
 NUM_WORKER_NODES = settings["nodes"]["workers"]["count"]
 
+$script = <<-SCRIPT
+sudo cp /tmp/aliases.sh /etc/profile.d/aliases.sh
+sudo chmod +x /etc/profile.d/aliases.sh
+source /etc/profile
+SCRIPT
+
 Vagrant.configure("2") do |config|
-  config.vm.provision "shell", env: { "IP_NW" => IP_NW, "IP_START" => IP_START, "NUM_WORKER_NODES" => NUM_WORKER_NODES }, inline: <<-SHELL
-      apt-get update -y
+  config.vm.provision "shell", env: { "IP_NW" => IP_NW, "IP_START" => IP_START, "NUM_WORKER_NODES" => NUM_WORKER_NODES }, inline: <<-SHELL 
+    apt-get update -y
       echo "$IP_NW$((IP_START)) control-plane" >> /etc/hosts
       for i in `seq 1 ${NUM_WORKER_NODES}`; do
         echo "$IP_NW$((IP_START+i)) worker-node0${i}" >> /etc/hosts
@@ -48,8 +54,12 @@ Vagrant.configure("2") do |config|
         "OS" => settings["software"]["os"]
       },
       path: "scripts/common.sh"
+    control.vm.provision "file", source: "aliases.sh", destination: "/tmp/aliases.sh"
+    control.vm.provision "shell",
+      inline: $script
     control.vm.provision "shell",
       env: {
+        "DEBIAN_FRONTEND" => "noninteractive",  
         "CALICO_VERSION" => settings["software"]["calico"],
         "CONTROL_IP" => settings["network"]["control_ip"],
         "POD_CIDR" => settings["network"]["pod_cidr"],
@@ -76,8 +86,12 @@ Vagrant.configure("2") do |config|
             vb.customize ["modifyvm", :id, "--groups", ("/" + settings["cluster_name"])]
           end
       end
+      node.vm.provision "file", source: "aliases.sh", destination: "/tmp/aliases.sh"
+      node.vm.provision "shell",
+        inline: $script
       node.vm.provision "shell",
         env: {
+          "DEBIAN_FRONTEND" => "noninteractive",  
           "DNS_SERVERS" => settings["network"]["dns_servers"].join(" "),
           "ENVIRONMENT" => settings["environment"],
           "KUBERNETES_VERSION" => settings["software"]["kubernetes"],
