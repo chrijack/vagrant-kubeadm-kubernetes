@@ -41,18 +41,18 @@ curl https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/m
 kubectl apply -f calico.yaml
 
 # Install helm (required for cilium)
-#wget https://get.helm.sh/helm-v3.12.1-linux-amd64.tar.gz
-#tar xvf helm-*-linux-amd64.tar.gz
-#sudo mv linux-amd64/helm /usr/local/bin
+wget https://get.helm.sh/helm-v3.12.1-linux-amd64.tar.gz
+tar xvf helm-*-linux-amd64.tar.gz
+sudo mv linux-amd64/helm /usr/local/bin
 
-#kubectl label node $NODENAME node-access=ssh
-#kubectl create namespace cilium
+# kubectl label node $NODENAME node-access=ssh
+# kubectl create namespace cilium
+
 
 # Install Cilium 
 #helm repo add cilium https://helm.cilium.io/
 #helm install cilium cilium/cilium --version 1.13.4 \
-#  --namespace cilium 
-
+#   --namespace kube-system
 
 sudo -i -u vagrant bash << EOF
 whoami
@@ -60,6 +60,11 @@ mkdir -p /home/vagrant/.kube
 sudo cp -i $config_path/config /home/vagrant/.kube/
 sudo chown 1000:1000 /home/vagrant/.kube/config
 EOF
+
+# Install ingress via helm
+#helm upgrade --install ingress-nginx ingress-nginx \
+#  --repo https://kubernetes.github.io/ingress-nginx \
+#  --namespace ingress-nginx --create-namespace
 
 # Install Metrics Server
 
